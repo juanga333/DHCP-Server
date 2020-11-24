@@ -29,7 +29,8 @@ class DHCPListener:
         self.__DHCPServerIp = get_if_addr(conf.iface)
         self.__DHCPMac = Ether().src
         self.__dictIPS = {}
-        self.setIPPool("192.168.0.101-200")
+        self.__IPPool = self.getIPPool("192.168.0.101-200")
+        print(self.__IPPol)
 
         self.__fakeDNSServer = "8.8.8.8"
         self.__fakeSubnetMask = ""
@@ -45,8 +46,8 @@ class DHCPListener:
     def setGatewayIP(self, gateway):
         self.__fakeGatewayIP = gateway
 
-    def setIPPool(self, iprange):
-        self.__IPPol = self.returnRange(iprange)
+    def getIPPool(self, iprange):
+        return self.returnRange(iprange)
 
     @staticmethod
     def getIpRangeIterator(iprange):
@@ -136,7 +137,7 @@ class DHCPListener:
         # DHCP discover
         if DHCP in packet and packet[DHCP].options[0][1] == 1:
             # send DHCP offer
-            if len(self.__IPPool) != 0:
+            if len(self.__IPPool) > 0:
                 IPClient = self.__IPPool.pop()
                 offer = self.generatePacketServer("offer", IPClient, packet)
                 sendp(offer)
