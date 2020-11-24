@@ -2,16 +2,18 @@
 
 This is a DHCP rogue server developed for ethical purposes and pestesting.
 
-# Requirements
+## Starting
 
-* Scapy
-* Python3
-* Unix/Windows/macOS
-**Tested mainly in Linux** 
+### Pre-requisites
 
-# Insalling
-'sudo apt install python3'
-'sudo apt install python3-pip'
-'git clone https://github.com/juanga333/DHCP-Server.git'
-'cd DHCP-Server'
-'pip3 install requirements.txt'
+```
+sudo apt install python3
+sudo apt install python3-pip
+```
+
+# Installation
+```
+git clone https://github.com/juanga333/DHCP-Server.git
+cd DHCP-Server
+pip3 install -r requirements.txt
+```
