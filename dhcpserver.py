@@ -45,20 +45,20 @@ class DHCPListener:
     def setGatewayIP(self, gateway):
         self.__fakeGatewayIP = gateway
 
-    def setIPPool(self, ipRangue):
-        self.__IPPol = self.returnRangue(ipRangue)
+    def setIPPool(self, iprange):
+        self.__IPPol = self.returnRange(iprange)
 
     @staticmethod
-    def getIpRangeIterator(ipRangue):
-        l: list = ipRangue.split(".")
+    def getIpRangeIterator(iprange):
+        l: list = iprange.split(".")
         l.remove(l[len(l) - 1])
         ip = ""
         for i in l:
             ip += str(i) + "."
         return ip
 
-    def returnRangue(self, ipRangue):
-        listIP = ipRangue.split("-")
+    def returnRange(self, iprange):
+        listIP = iprange.split("-")
         maxIP = self.getIpRangeIterator(listIP[0])
         listIP[1] = maxIP + listIP[1]
         return self.generateList(listIP)
@@ -173,8 +173,8 @@ if __name__ == "__main__":
                              "Default is the same IP"
                              " that your DHCP server")
     #############################################################################################################
-    parser.add_argument("-x", "--rangue", required=False,
-                        help="Rangue IP Ex: 192.168.0.1-45 ")
+    parser.add_argument("-x", "--iprange", required=False,
+                        help="Range IP Ex: 192.168.0.1-45 ")
     #############################################################################################################
     parser.add_argument("-s", "--starvation", required=False, help="If we want to use the starvation function, "
                                                                    "the argument you need to pass is the number of seconds "
@@ -188,8 +188,8 @@ if __name__ == "__main__":
     if args.gateway is not None:
         DHCPListener.setGatewayIP(args.gateway)
     DHCPListener.setSubnetMask(args.netmask)
-    if args.rangue is not None:
-        DHCPListener.setIPPool(args.rangue)
+    if args.iprange is not None:
+        DHCPListener.setIPPool(args.iprange)
     if args.starvation is not None:
         if args.iteration is None:
             iteration = 100
