@@ -34,9 +34,9 @@ _Also You can specify the list of ips for the victims_
 sudo python3 dhcpserver.py -m <netmask> -d <dns_ip> -g <gateway_ip> -x 192.168.0.101-120
 ```
 
-_You can speficy if you want to do a starvation attack before listening_
+_You can also do a starvation attack_
 ```
-sudo python3 dhcpserver.py -m <netmask> -d <dns_ip> -g <gateway_ip> -x 192.168.0.101-120 -s <delay seconds> -i <number of iteration>
+sudo python3 starvation.py
 ```
 
 # Complementary tools
