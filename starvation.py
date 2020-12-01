@@ -37,15 +37,15 @@ def generatePacketClient(self, type, mac):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="This script is a DHCP starvation attack.")
     parser.add_argument("-s", "--secondDelay", required=False, help="Seconds to delay the function")
-    parser.add_argument("-i", "--iteration", required=False, help="Number of fakes device to connect")
+    parser.add_argument("-i", "--iteration", required=False, help="Number of fakes device to connect. "
+                                                                  "(The real number is 64 * i)")
     args = parser.parse_args()
-
     print("Starve...")
+
     if args.secondDelay is None:
         seconds = 0
     else:
         seconds = args.secondDelay
-
     if args.iteration is None:
         iteration = 100
     else:
