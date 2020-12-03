@@ -29,7 +29,7 @@ class DHCPListener:
         self.__DHCPServerIp = get_if_addr(conf.iface)
         self.__DHCPMac = Ether().src
         self.__dictIPS = {}
-        self.__IPPool = self.getIPPoolbyRange("192.168.0.101-200")
+        self.__IPPool = []
 
         self.__fakeDNSServer = "8.8.8.8"
         self.__fakeSubnetMask = ""
@@ -46,7 +46,7 @@ class DHCPListener:
         self.__fakeGatewayIP = gateway
 
     def setIPPool(self, IPPool):
-        self.__IPPool = IPPool
+        self.__IPPool = self.getIPPoolbyRange(IPPool)
 
     # Return a list of IP address given a range
     def getIPPoolbyRange(self, iprange):
