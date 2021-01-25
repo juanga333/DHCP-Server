@@ -7,6 +7,18 @@ from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether, getmacbyip
 
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 class DHCPListener:
     # Real router
     __GATEWAY_IP: str
@@ -131,9 +143,9 @@ class DHCPListener:
                 offer = self.generatePacketServer("offer", IPClient, packet)
                 sendp(offer)
 
-            print('---New DHCP Discover---')
+            print(f'{bcolors.OKBLUE}---New DHCP Discover---{bcolors.ENDC}')
             hostname = self.getOption(packet[DHCP].options, 'hostname')
-            print(f"[*] Host {hostname} ({packet[Ether].src}) asked for an IP")
+            print(f"{bcolors.FAIL}[*]{bcolors.ENDC} Host {bcolors.WARNING}{hostname}{bcolors.ENDC} ({bcolors.WARNING}{packet[Ether].src}{bcolors.ENDC}) asked for an IP")
 
         # DHCP request
         if DHCP in packet and packet[DHCP].options[0][1] == 3:
@@ -142,10 +154,14 @@ class DHCPListener:
             ack = self.generatePacketServer("ack", requestedIP, packet)
             sendp(ack)
 
-            print('---New DHCP Request---')
+            print(f"{bcolors.OKBLUE}---New DHCP Request---{bcolors.ENDC}")
             hostname = self.getOption(packet[DHCP].options, 'hostname')
-            print(f"[*] Host {hostname} ({packet[Ether].src}) requested {requestedIP}")
+            print(f"{bcolors.FAIL}[*]{bcolors.ENDC} Device {bcolors.WARNING}{hostname}{bcolors.ENDC} ({bcolors.WARNING}{packet[Ether].src}{bcolors.ENDC}){bcolors.ENDC} requested {bcolors.WARNING}{requestedIP}")
             self.__dictIPS[requestedIP] = packet[Ether].src
+
+            """f = open(".dhcpusers.txt","a")
+            f.write(f"{hostname} {packet[Ether].src} {requestedIP}\r\n")
+            f.close()"""
 
         """else:
             print('---Other DHCP packet?---')
@@ -175,5 +191,10 @@ if __name__ == "__main__":
     if args.iprange is not None:
         DHCPListener.setIPPool(args.iprange)
 
+    """if os.path.exists('.dhcpusers.txt'):
+        os.remove('.dhcpusers.txt')
+    os.mknod('.dhcpusers.txt')"""
+
     print("DHCP server in listening...")
     sniff(filter="udp and port 67", prn=DHCPListener.listener)
+
