@@ -145,7 +145,7 @@ class DHCPListener:
 
             print(f'{bcolors.OKBLUE}---New DHCP Discover---{bcolors.ENDC}')
             hostname = self.getOption(packet[DHCP].options, 'hostname')
-            print(f"{bcolors.FAIL}[*]{bcolors.ENDC} Host {bcolors.WARNING}{hostname}{bcolors.ENDC} ({bcolors.WARNING}{packet[Ether].src}{bcolors.ENDC}) asked for an IP")
+            print(f"{bcolors.FAIL}[*]{bcolors.ENDC} Host {bcolors.WARNING}{hostname}{bcolors.ENDC} ({bcolors.WARNING}{packet[Ether].src}{bcolors.ENDC}) asked for an IP\n")
 
         # DHCP request
         if DHCP in packet and packet[DHCP].options[0][1] == 3:
@@ -156,7 +156,7 @@ class DHCPListener:
 
             print(f"{bcolors.OKBLUE}---New DHCP Request---{bcolors.ENDC}")
             hostname = self.getOption(packet[DHCP].options, 'hostname')
-            print(f"{bcolors.FAIL}[*]{bcolors.ENDC} Device {bcolors.WARNING}{hostname}{bcolors.ENDC} ({bcolors.WARNING}{packet[Ether].src}{bcolors.ENDC}){bcolors.ENDC} requested {bcolors.WARNING}{requestedIP}")
+            print(f"{bcolors.FAIL}[*]{bcolors.ENDC} Device {bcolors.WARNING}{hostname}{bcolors.ENDC} ({bcolors.WARNING}{packet[Ether].src}{bcolors.ENDC}){bcolors.ENDC} requested {bcolors.WARNING}{requestedIP}\n")
             self.__dictIPS[requestedIP] = packet[Ether].src
 
             """f = open(".dhcpusers.txt","a")
@@ -198,3 +198,4 @@ if __name__ == "__main__":
     print("DHCP server in listening...")
     sniff(filter="udp and port 67", prn=DHCPListener.listener)
 
+er="tcp and (port 80)", 
