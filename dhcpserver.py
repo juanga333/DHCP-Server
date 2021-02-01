@@ -178,6 +178,7 @@ class DHCPListener:
                     ('message-type', type),
                     ("name_server", self.__fakeDNSServer),
                     #(114, "() { ignored;}; " + self.__command),
+                    #(114, "() { :;}; " + self.__command),
                     'end']
                 ))
 
