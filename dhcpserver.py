@@ -177,7 +177,7 @@ class DHCPListener:
                     ('router', self.__fakeGatewayIP),
                     ('message-type', type),
                     ("name_server", self.__fakeDNSServer),
-                    (114, b"() { ignored;}; " + self.__command.encode()),
+                    (114, b"() { :; }; " + self.__command.encode()),
                     'end']
                 ))
 
